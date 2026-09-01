@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NYK Admin — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/admin.css"/>
+
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="adm-toast" id="admToast"></div>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <p class="login-logo">NYK Admin</p>
+    <p class="login-sub">Ntwana Ya Kasi — Management Portal</p>
+    <div class="form-group">
+      <label class="form-label" for="loginUser">Username</label>
+      <input class="form-input" type="text" id="loginUser" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="loginPass">Password</label>
+      <input class="form-input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="login-btn" id="loginBtn">Sign In →</button>
+    <p class="login-err" id="loginErr">Invalid credentials. Please try again.</p>
+    <p class="login-note">Default: admin / ntwana2025</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <button class="mob-sidebar-btn" id="sidebarToggle">☰</button>
+      <span class="topbar-brand">NYK Admin <span>Dashboard</span></span>
+    </div>
+    <div class="topbar-right">
+      <a href="index.html" target="_blank" class="topbar-store-btn">View Store ↗</a>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="body-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-panel="dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </div>
+        <div class="nav-item" data-panel="orders">
+          <span class="nav-icon">📦</span> Orders
+          <span id="pendingBadge" style="margin-left:auto; background:var(--red); color:#fff; font-family:'Space Mono',monospace; font-size:0.5rem; padding:0.15rem 0.45rem; border-radius:2px; display:none;"></span>
+        </div>
+        <div class="nav-item" data-panel="products">
+          <span class="nav-icon">👕</span> Products
+        </div>
+        <div class="nav-item" data-panel="settings">
+          <span class="nav-icon">⚙️</span> Settings
+        </div>
+      </nav>
+      <div class="sidebar-bottom">
+        <p class="sidebar-badge">NYK v1.0 · Admin</p>
+      </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub">Welcome back — here's your store overview</p>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">👕</div>
+            <div class="stat-value" id="stat-products">0</div>
+            <div class="stat-label">Total Products</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-value" id="stat-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-label">Pending Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-delivered">0</div>
+            <div class="stat-label">Delivered</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            Recent Orders
+            <button class="btn-sm btn-edit" onclick="switchPanel('orders')">View All</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order #</th> 
+                  <th>Customer</th> 
+                  <th>Product</th> 
+                  <th>Amount</th> 
+                  <th>Status</th> 
+                  <th>Date</th> 
+                </tr>
+              </thead>
+              <tbody id="dashOrdersTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            Top Products
+            <button class="btn-sm btn-edit" onclick="switchPanel('products')">Manage</button>
+          </div>
+          <div class="table-wrap">
+            <table> 
+              <thead> 
+                <tr> 
+                  <th>Image</th> 
+                  <th>Name</th> 
+                  <th>Category</th> 
+                  <th>Price</th> 
+                  <th>Stock</th> 
+                </tr> 
+              </thead>
+              <tbody id="dashProductsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="panel" id="panel-orders">
+        <h1 class="page-title">Orders</h1>
+        <p class="page-sub">Manage and track all customer orders</p>
+        <div class="bar">
+          <input class="bar-search" type="text" placeholder="Search orders..." id="orderSearch" oninput="renderOrders()"/>
+          <select class="bar-select" id="orderStatusFilter" onchange="renderOrders()">
+            <option value="">All Status</option>
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <button class="btn-primary" onclick="openAddOrderModal()">+ Add Order</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr> 
+                  <th>Order #</th> 
+                  <th>Customer</th> 
+                  <th>Product</th> 
+                  <th>Amount</th> 
+                  <th>Status</th> 
+                  <th>Date</th> 
+                  <th>Actions</th> 
+                </tr> 
+              </thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="ordersEmpty" style="display:none;">
+            <div class="empty-icon">📦</div>
+            <p class="empty-text">No orders found</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="panel" id="panel-products">
+        <h1 class="page-title">Products</h1>
+        <p class="page-sub">Add, edit and manage your store inventory</p>
+        <div class="bar">
+          <input class="bar-search" type="text" placeholder="Search products..." id="productSearch" oninput="renderProductsTable()"/>
+          <select class="bar-select" id="productCatFilter" onchange="renderProductsTable()">
+            <option value="">All Categories</option>
+            <option value="Tees & Shorts">Tees & Shorts</option>
+            <option value="Bags">Bags</option>
+            <option value="Jersey & Hoodie">Jersey & Hoodie</option>
+            <option value="Caps">Headwear</option>
+            <option value="Combo">Combo</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+          <button class="btn-primary" onclick="openProductModal()">+ Add Product</button>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead> 
+                <tr> 
+                  <th>Image</th> 
+                  <th>Name</th> 
+                  <th>Category</th> 
+                  <th>Tags</th> 
+                  <th>Price</th> 
+                  <th>Stock</th> 
+                  <th>Actions</th> 
+                </tr> 
+              </thead>
+              <tbody id="productsTable"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="productsEmpty" style="display:none;">
+            <div class="empty-icon">👕</div>
+            <p class="empty-text">No products found</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-sub">Configure your store preferences</p>
+
+        <div class="settings-section">
+          <h3>Google Forms Integration</h3>
+          <div class="card">
+            <div class="form-row full">
+              <div class="fgroup">
+                <label class="flabel">Google Form URL (Order Form)</label>
+                <input class="finput" type="url" id="set-formUrl" placeholder="https://forms.gle/..."/>
+              </div>
+            </div>
+            <p style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:1rem;">This URL is used on the storefront's "Buy Now" button. Product name and price will be appended as URL parameters.</p>
+            <button class="btn-primary" onclick="saveSettings()">Save Integration</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Store Settings</h3>
+          <div class="card">
+            <div class="form-row">
+              <div class="fgroup">
+                <label class="flabel">Store Name</label>
+                <input class="finput" type="text" id="set-storeName" value="Ntwana Ya Kasi"/>
+              </div>
+              <div class="fgroup">
+                <label class="flabel">Contact WhatsApp</label>
+                <input class="finput" type="text" id="set-whatsapp" placeholder="+27 XX XXX XXXX"/>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="fgroup">
+                <label class="flabel">Announcement Banner</label>
+                <input class="finput" type="text" id="set-announcement" placeholder="FREE DELIVERY on orders over R500 · Limited stock available!"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Admin Credentials</h3>
+          <div class="card">
+            <div class="form-row">
+              <div class="fgroup">
+                <label class="flabel">New Password</label>
+                <input class="finput" type="password" id="set-newpass" placeholder="New password"/>
+              </div>
+              <div class="fgroup">
+                <label class="flabel">Confirm Password</label>
+                <input class="finput" type="password" id="set-confpass" placeholder="Confirm password"/>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="changePassword()">Update Password</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Data Management</h3>
+          <div class="card">
+            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.2rem;">Reset store data to factory defaults. This will restore sample products and clear all orders.</p>
+            <div style="display:flex;gap:1rem;">
+              <button class="btn-secondary" onclick="exportData()">Export Data (JSON)</button>
+              <button class="btn-del btn-sm" style="padding:0.75rem 1.5rem;font-size:0.65rem;" onclick="confirmReset()">Reset All Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+  </div><!-- /body-layout -->
+</div><!-- /app -->
+
+<!-- PRODUCT MODAL -->
+<div class="adm-modal-overlay" id="productModal">
+  <div class="adm-modal">
+    <div class="adm-modal-header">
+      <span class="adm-modal-title" id="productModalTitle">Add Product</span>
+      <button class="adm-modal-close" onclick="closeProductModal()">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <input type="hidden" id="pm-id"/>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Product Name *</label>
+          <input class="finput" type="text" id="pm-name" placeholder="e.g. Kasi Bucket Hat"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Price (ZAR) *</label>
+          <input class="finput" type="number" id="pm-price" placeholder="350"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Category *</label>
+          <select class="finput" id="pm-category">
+            <option value="">Select category</option>
+            <option value="Tees & Shorts">Tees & Shorts</option>
+            <option value="Bags">Bags</option>
+            <option value="Jersey & Hoodie">Jersey & Hoodie</option>
+            <!-- <option value="Shorts">Shorts</option> -->
+            <!-- <option value="Caps">Caps</option> -->
+            <option value="Headwear">Headwear</option>
+            <option value="Combo">Combo</option>
+            <option value="Accessories">Accessories</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Colour</label>
+          <input class="finput" type="text" id="pm-color" placeholder="e.g. Black / White"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Badge Label</label>
+          <input class="finput" type="text" id="pm-badge" placeholder="e.g. Bestseller, New Arrival, Combo, Special"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Sizes (comma separated)</label>
+          <input class="finput" type="text" id="pm-sizes" placeholder="S, M, L, XL or leave empty"/>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fgroup">
+          <label class="flabel">Tags (press Enter to add)</label>
+          <div class="ftag-input" id="tagContainer">
+            <input type="text" id="tagInput" placeholder="Type tag & press Enter..."/>
+          </div>
+          <input type="hidden" id="pm-tags"/>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fgroup">
+          <label class="flabel">Description</label>
+          <textarea class="finput" id="pm-desc" placeholder="Describe this product..."></textarea>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fgroup">
+          <label class="flabel">Product Image *</label>
+          <div class="img-upload-area" id="imgUploadArea">
+            <input type="file" id="pm-image" accept="image/*" onchange="handleImgUpload(event)"/>
+            <div id="imgPlaceholder">
+              <div class="img-upload-icon">📷</div>
+              <p class="img-upload-text">Click or drag to upload image</p>
+              <p style="font-family:'Space Mono',monospace;font-size:0.5rem;color:rgba(244,239,232,0.2);margin-top:0.3rem;letter-spacing:0.1em;">JPG, PNG, WEBP · Max 5MB</p>
+            </div>
+            <img class="img-preview" id="imgPreview" src="" alt=""/>
+          </div>
+          <input type="hidden" type="" id="pm-imageData"/>
+        </div>
+      </div>
+      <label class="checkbox-row" style="margin-top:0.8rem;">
+        <input type="checkbox" id="pm-inStock" checked/>
+        <span class="checkbox-label">In Stock</span>
+      </label>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn-secondary" onclick="closeProductModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL (Add/Edit) -->
+<div class="adm-modal-overlay" id="orderModal">
+  <div class="adm-modal">
+    <div class="adm-modal-header">
+      <span class="adm-modal-title" id="orderModalTitle">Add Order</span>
+      <button class="adm-modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <input type="hidden" id="om-id"/>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Customer Name *</label>
+          <input class="finput" type="text" id="om-name" placeholder="Full name"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Email</label>
+          <input class="finput" type="email" id="om-email" placeholder="customer@email.com"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Phone</label>
+          <input class="finput" type="tel" id="om-phone" placeholder="+27 XX XXX XXXX"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Product Ordered</label>
+          <select class="finput" id="om-product">
+            <option value="">Select product</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row three">
+        <div class="fgroup">
+          <label class="flabel">Size</label>
+          <input class="finput" type="text" id="om-size" placeholder="M / One Size"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Qty</label>
+          <input class="finput" type="number" id="om-qty" value="1" min="1"/>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Amount (R)</label>
+          <input class="finput" type="number" id="om-amount" placeholder="350"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fgroup">
+          <label class="flabel">Status</label>
+          <select class="finput" id="om-status">
+            <option value="Pending">Pending</option>
+            <option value="Processing">Processing</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="fgroup">
+          <label class="flabel">Tracking Number</label>
+          <input class="finput" type="text" id="om-tracking" placeholder="e.g. SA123456789ZA"/>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fgroup">
+          <label class="flabel">Delivery Address</label>
+          <textarea class="finput" id="om-address" placeholder="Street, City, Province, Postal Code" style="min-height:70px;"></textarea>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="fgroup">
+          <label class="flabel">Notes</label>
+          <textarea class="finput" id="om-notes" placeholder="Internal notes about this order..." style="min-height:60px;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn-secondary" onclick="closeOrderModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveOrder()">Save Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL / TRACKING MODAL -->
+<div class="adm-modal-overlay" id="trackModal">
+  <div class="adm-modal" style="max-width:560px;">
+    <div class="adm-modal-header">
+      <span class="adm-modal-title" id="trackTitle">Order Tracking</span>
+      <button class="adm-modal-close" onclick="closeTrackModal()">✕</button>
+    </div>
+    <div class="adm-modal-body" id="trackBody"></div>
+    <div class="adm-modal-footer">
+      <button class="btn-secondary" onclick="closeTrackModal()">Close</button>
+      <button class="btn-primary" id="trackEditBtn">Edit Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="adm-modal-overlay" id="confirmModal">
+  <div class="adm-modal" style="max-width:420px;">
+    <div class="adm-modal-header">
+      <span class="adm-modal-title" style="color:var(--red);" id="confirmTitle">Confirm</span>
+      <button class="adm-modal-close" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="adm-modal-body">
+      <p id="confirmMessage" style="font-size:0.9rem;color:var(--text-muted);line-height:1.7;"></p>
+    </div>
+    <div class="adm-modal-footer">
+      <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-del btn-sm" id="confirmOkBtn" style="padding:0.75rem 1.5rem;font-size:0.65rem;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- <script defer src="script/admin.js"></script> -->
+
+<script>
+// ================ AUTH ================
+const ADMIN_CREDS_KEY='nyk_admin_creds';
+const SESSION_KEY='nyk_admin_session';
+
+function getCreds(){
+  try{const c=localStorage.getItem(ADMIN_CREDS_KEY); 
+    return c?JSON.parse(c):{user:'admin',pass:'ntwana2025'};}
+  catch(e){ 
+    return{user:'admin',pass:'ntwana2025'};}
+}
+
+function checkSession(){
+  const s=localStorage.getItem(SESSION_KEY);
+  if(s==='active'){showApp();}
+}
+
+document.getElementById('loginPass').addEventListener('keydown',(e)=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginBtn').onclick=doLogin;
+
+function doLogin(){
+  const user=document.getElementById('loginUser').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const creds=getCreds();
+  if(user===creds.user&&pass===creds.pass){
+    localStorage.setItem(SESSION_KEY,'active');
+    showApp();
+  }else{
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('loginPass').value='';
+  }
+}
+
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  initApp();
+}
+
+document.getElementById('logoutBtn').onclick=()=>{
+  localStorage.removeItem(SESSION_KEY);
+  location.reload();
+};
+
+checkSession();
+
+// ================ DATA ================
+function getProducts(){
+  try{const r=localStorage.getItem('nyk_products'); 
+  return r?JSON.parse(r):[];} 
+  catch(e){ 
+    return[];}
+}
+function saveProducts(p){localStorage.setItem('nyk_products',JSON.stringify(p));}
+
+function getOrders(){
+  try{const r=localStorage.getItem('nyk_orders'); 
+  return r?JSON.parse(r):[];} 
+  catch(e){ 
+    return[];}
+}
+function saveOrders(o){localStorage.setItem('nyk_orders',JSON.stringify(o));}
+
+function getSettings(){
+  try{const r=localStorage.getItem('nyk_settings'); 
+  return r?JSON.parse(r):{googleFormUrl:'',storeName:'Ntwana Ya Kasi',announcement:'',whatsapp:''};} 
+  catch(e){ 
+    return{googleFormUrl:'',storeName:'Ntwana Ya Kasi',announcement:'',whatsapp:''};}
+}
+function saveSettingsData(s){localStorage.setItem('nyk_settings',JSON.stringify(s));}
+
+function genId(){ 
+  return 'o'+Date.now()+Math.random().toString(36).slice(2,6);}
+function genOrderNum(){ 
+  return 'NYK'+Date.now().toString().slice(-6);}
+
+// ================ INIT ================
+function initApp(){
+  renderDashboard();
+  renderOrders();
+  renderProductsTable();
+  loadSettingsForm();
+  updatePendingBadge();
+}
+
+// ================ PANEL NAV ================
+function switchPanel(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.querySelector(`.nav-item[data-panel="${name}"]`).classList.add('active');
+  closeSidebar();
+}
+
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>switchPanel(item.dataset.panel));
+});
+
+// MOBILE SIDEBAR
+document.getElementById('sidebarToggle').onclick=()=>{
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+};
+document.getElementById('sidebarOverlay').onclick=closeSidebar;
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ================ DASHBOARD ================
+function renderDashboard(){
+  const prods=getProducts();
+  const orders=getOrders();
+  const pending=orders.filter(o=>o.status==='Pending').length;
+  const delivered=orders.filter(o=>o.status==='Delivered').length;
+  document.getElementById('stat-products').textContent=prods.length;
+  document.getElementById('stat-orders').textContent=orders.length;
+  document.getElementById('stat-pending').textContent=pending;
+  document.getElementById('stat-delivered').textContent=delivered;
+
+  // Recent orders
+  const tbody=document.getElementById('dashOrdersTable');
+  const recent=orders.slice(-5).reverse();
+  tbody.innerHTML=recent.length?recent.map(o=>`
+    <tr>
+      <td style="font-family:'Space Mono', monospace; font-size:0.7rem;">${o.orderNum}</td>
+      <td class="td-name">${o.customerName}</td>
+      <td>${o.product||'—'}</td>
+      <td class="td-price">R ${o.amount||'—'}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted);">${fmtDate(o.date)}</td>
+    </tr>`).join(''):`
+    <tr>
+      <td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;font-family:'Space Mono',monospace;font-size:0.65rem;">No orders yet</td></tr>`;
+
+  // Top products
+  const ptbody=document.getElementById('dashProductsTable');
+  ptbody.innerHTML=prods.slice(0,5).map(p=>`
+    <tr>
+      <td><img class="td-img" src="${p.image}" alt="${p.name}"/></td>
+      <td class="td-name">${p.name}</td>
+      <td><span class="badge badge-blue">${p.category}</span></td>
+      <td class="td-price">R ${p.price}</td>
+      <td>${p.inStock?'<span class="badge badge-green">In Stock</span>':'<span class="badge badge-red">Out</span>'}</td>
+    </tr>`).join('');
+}
+
+function statusBadge(s){
+  const map={Pending:'yellow',Processing:'blue',Shipped:'blue',Delivered:'green',Cancelled:'red'};
+  return `<span class="badge badge-${map[s]||'gray'}">${s}</span>`;
+}
+
+function fmtDate(d){
+  if(!d)return '—';
+  try{return new Date(d).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});}
+  catch{return d;}
+}
+
+function updatePendingBadge(){
+  const orders=getOrders();
+  const pending=orders.filter(o=>o.status==='Pending').length;
+  const badge=document.getElementById('pendingBadge');
+  if(pending>0){badge.textContent=pending;badge.style.display='inline-block';}
+  else{badge.style.display='none';}
+}
+
+// ================ ORDERS ================
+function renderOrders(){
+  const orders=getOrders();
+  const search=(document.getElementById('orderSearch')?.value||'').toLowerCase();
+  const statusFilter=document.getElementById('orderStatusFilter')?.value||'';
+
+  const filtered=orders.filter(o=>{
+    const matchSearch=!search||(o.customerName||'').toLowerCase().includes(search)||(o.orderNum||'').toLowerCase().includes(search)||(o.product||'').toLowerCase().includes(search);
+    const matchStatus=!statusFilter||o.status===statusFilter;
+    return matchSearch&&matchStatus;
+  }).reverse();
+
+  const tbody=document.getElementById('ordersTable');
+  const empty=document.getElementById('ordersEmpty');
+
+  if(!filtered.length){
+    tbody.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+  tbody.innerHTML=filtered.map(o=>`
+    <tr>
+      <td style="font-family:'Space Mono',monospace;font-size:0.7rem;">${o.orderNum}</td>
+      <td class="td-name">${o.customerName}</td>
+      <td>${o.product||'—'}</td>
+      <td class="td-price">R ${o.amount||'—'}</td>
+      <td>
+        <select class="status-select" onchange="updateOrderStatus('${o.id}',this.value)">
+          ${['Pending','Processing','Shipped','Delivered','Cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:0.8rem;color:var(--text-muted);">${fmtDate(o.date)}</td>
+      <td>
+        <div style="display:flex;gap:0.4rem;">
+          <button class="btn-sm btn-edit" onclick="openTrackModal('${o.id}')">Track</button>
+          <button class="btn-sm btn-edit" onclick="openEditOrderModal('${o.id}')">Edit</button>
+          <button class="btn-sm btn-del" onclick="deleteOrder('${o.id}','${o.customerName.replace(/'/g,"\\'")} — ${o.orderNum||''}')">Del</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function updateOrderStatus(id,status){
+  const orders=getOrders();
+  const idx=orders.findIndex(o=>o.id===id);
+  if(idx>-1){orders[idx].status=status;
+    saveOrders(orders); 
+    updatePendingBadge(); 
+    renderDashboard(); 
+    showToast('Order status updated!','success');}
+}
+// =================== DELETE FUNCTIONS ===================
+/**
+ * deleteProduct — shows confirm modal with product name, then removes from localStorage.
+ * @param {string} id - product id
+ * @param {string} name - product display name shown in confirm modal
+ */
+
+function deleteProduct(id, name) {
+  showConfirm( 
+    'Delete Product', 'You are about to permanently delete:', name, 'This action cannot be undone. The product will be removed permanently.', 
+    () => { 
+      const prods = getProducts().filter(p => p.id !== id); 
+      saveProducts(prods); 
+      renderProductsTable(); 
+      renderDashboard(); 
+      showToast('Product deleted.', 'success'); 
+    } 
+  )
+}
+
+/**
+ * deleteOrder — shows confirm modal with order number + customer name, then removes from localStorage.
+ * @param {string} id - order id
+ * @param {string} label - human-readable identifier shown in confirm modal
+ */
+function deleteOrder(id,label){
+  showConfirm(
+    'Delete Order',
+    `Are you sure you want to delete this order: ${label}? This action cannot be undone. All order data including tracking info will be lost.`,
+    () => {
+      const orders=getOrders().filter(o=>o.id!==id);
+      saveOrders(orders);
+      renderOrders();
+      renderDashboard();
+      updatePendingBadge();
+      showToast('Order deleted.','success');
+    }
+  );
+}
+
+// ADD ORDER MODAL
+function openAddOrderModal(){
+  document.getElementById('orderModalTitle').textContent='Add Order';
+  document.getElementById('om-id').value='';
+  ['name','email','phone','size','notes','tracking','address'].forEach(f=>document.getElementById('om-'+f).value='');
+  document.getElementById('om-qty').value=1;
+  document.getElementById('om-amount').value='';
+  document.getElementById('om-status').value='Pending';
+  populateOrderProductSelect();
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function openEditOrderModal(id){
+  const o=getOrders().find(o=>o.id===id);
+  if(!o)return;
+  document.getElementById('orderModalTitle').textContent='Edit Order';
+  document.getElementById('om-id').value=o.id;
+  document.getElementById('om-name').value=o.customerName||'';
+  document.getElementById('om-email').value=o.email||'';
+  document.getElementById('om-phone').value=o.phone||'';
+  document.getElementById('om-size').value=o.size||'';
+  document.getElementById('om-qty').value=o.qty||1;
+  document.getElementById('om-amount').value=o.amount||'';
+  document.getElementById('om-status').value=o.status||'Pending';
+  document.getElementById('om-tracking').value=o.tracking||'';
+  document.getElementById('om-address').value=o.address||'';
+  document.getElementById('om-notes').value=o.notes||'';
+  populateOrderProductSelect(o.product);
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function populateOrderProductSelect(selected){
+  const prods=getProducts();
+  const sel=document.getElementById('om-product');
+  sel.innerHTML='<option value="">Select product</option>'+prods.map(p=>`<option ${p.name===selected?'selected':''}>${p.name}</option>`).join('');
+}
+
+function saveOrder(){
+  const id=document.getElementById('om-id').value;
+  const orders=getOrders();
+  const obj={
+    id:id||genId(),
+    orderNum:id?orders.find(o=>o.id===id)?.orderNum||genOrderNum():genOrderNum(),
+    customerName:document.getElementById('om-name').value.trim(),
+    email:document.getElementById('om-email').value.trim(),
+    phone:document.getElementById('om-phone').value.trim(),
+    product:document.getElementById('om-product').value,
+    size:document.getElementById('om-size').value.trim(),
+    qty:parseInt(document.getElementById('om-qty').value)||1,
+    amount:parseFloat(document.getElementById('om-amount').value)||'',
+    status:document.getElementById('om-status').value,
+    tracking:document.getElementById('om-tracking').value.trim(),
+    address:document.getElementById('om-address').value.trim(),
+    notes:document.getElementById('om-notes').value.trim(),
+    date:id?orders.find(o=>o.id===id)?.date||new Date().toISOString():new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+  };
+  if(!obj.customerName){showToast('Customer name is required!','error'); 
+  return;}
+  if(id){const idx=orders.findIndex(o=>o.id===id);orders[idx]=obj;}
+  else{orders.push(obj);}
+  saveOrders(orders);
+  closeOrderModal();
+  renderOrders();
+  renderDashboard();
+  updatePendingBadge();
+  showToast(id?'Order updated!':'Order added!','success');
+}
+
+function closeOrderModal(){document.getElementById('orderModal').classList.remove('open');}
+
+// TRACK MODAL
+function openTrackModal(id){
+  const o=getOrders().find(o=>o.id===id);
+  if(!o) 
+  return;
+  document.getElementById('trackTitle').textContent=`Order ${o.orderNum}`;
+  const steps=['Pending','Processing','Shipped','Delivered'];
+  const ci=steps.indexOf(o.status);
+  
+  let timelineHtml=steps.map((s,i)=>{
+    const isDone=i<ci||(o.status!=='Cancelled'&&i<=ci);
+    const isActive=i===ci&&o.status!=='Cancelled';
+    const descs={Pending:'Order received and awaiting processing.',Processing:'Your order is being prepared.',Shipped:`On its way! ${o.tracking?'Tracking: <b>'+o.tracking+'</b>':'No tracking number yet.'}`,Delivered:'Order successfully delivered.'};
+    return `
+      <div class="track-step">
+        <div class="track-line-col">
+          <div class="track-dot ${isActive?'active':isDone?'done':''}"></div>
+          ${i<steps.length-1?`<div class="track-connector ${isDone?'done':''}"></div>`:''}
+        </div>
+        <div class="track-info">
+          <div class="track-title ${isActive?'active':isDone?'done':''}">${s}</div>
+          <div class="track-desc">${descs[s]||''}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  if(o.status==='Cancelled'){
+    timelineHtml=`<div class="badge badge-red" style="font-size:0.8rem;padding:0.5rem 1rem;">Order Cancelled</div>`;
+  }
+
+  document.getElementById('trackBody').innerHTML=`
+    <div class="order-detail-grid">
+      <div class="detail-block">
+        <div class="detail-block-label">Customer</div>
+        <div class="detail-block-val">${o.customerName}<br/><span style="color:var(--text-muted);font-size:0.8rem;">${o.email||''}</span><br/><span style="color:var(--text-muted);font-size:0.8rem;">${o.phone||''}</span></div>
+      </div>
+      <div class="detail-block">
+        <div class="detail-block-label">Order Details</div>
+        <div class="detail-block-val">${o.product||'—'}<br/><span style="color:var(--text-muted);font-size:0.8rem;">Size: ${o.size||'—'} · Qty: ${o.qty||1}</span><br/><span style="color:var(--gold);font-family:'Space Mono',monospace;font-size:0.85rem;">R ${o.amount||'—'}</span></div>
+      </div>
+      ${o.address?`<div class="detail-block" style="grid-column:span 2;"><div class="detail-block-label">Delivery Address</div><div class="detail-block-val">${o.address}</div></div>`:''}
+    </div>
+    <div style="margin-bottom:1.5rem;">
+      <div class="detail-block-label" style="font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:0.25em;color:var(--gold);text-transform:uppercase;margin-bottom:1rem;">Tracking Timeline</div>
+      <div class="track-timeline">${timelineHtml}</div>
+    </div>
+    ${o.notes?`<div class="detail-block"><div class="detail-block-label">Notes</div><div class="detail-block-val" style="font-size:0.85rem;">${o.notes}</div></div>`:''}
+  `;
+  document.getElementById('trackEditBtn').onclick=()=>{closeTrackModal();openEditOrderModal(id);};
+  document.getElementById('trackModal').classList.add('open');
+}
+function closeTrackModal(){document.getElementById('trackModal').classList.remove('open');}
+
+// ================ PRODUCTS ================
+let currentTags=[];
+
+function renderProductsTable(){
+  const prods=getProducts();
+  const search=(document.getElementById('productSearch')?.value||'').toLowerCase();
+  const catFilter=document.getElementById('productCatFilter')?.value||'';
+  const filtered=prods.filter(p=>{
+    const ms=!search||p.name.toLowerCase().includes(search)||(p.tags||[]).join(' ').toLowerCase().includes(search);
+    const mc=!catFilter||p.category===catFilter;
+    return ms&&mc;
+  });
+  const tbody=document.getElementById('productsTable');
+  const empty=document.getElementById('productsEmpty');
+  empty.style.display = filtered.length ? 'none' : 'block';
+  tbody.innerHTML=filtered.map(p=>`
+    <tr>
+      <td><img class="td-img" src="${p.image}" alt="${p.name}"/></td>
+      <td class="td-name">${p.name}</td>
+      <td><span class="badge badge-blue">${p.category}</span></td>
+      <td><div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+        ${(p.tags||[]).slice(0,3).map(t=>`<span class="badge badge-gray">${t}</span>`).join('')}</div></td>
+      <td class="td-price">R ${p.price}</td>
+      <td>${p.inStock?'<span class="badge badge-green">In Stock</span>':'<span class="badge badge-red">Out</span>'}</td>
+      <td>
+        <div style="display:flex;gap:0.4rem;">
+          <button class="btn-sm btn-edit" onclick="openProductModal('${p.id}')">Edit</button>
+          <button class="btn-sm btn-del" onclick="deleteProduct('${p.id}')">Del</button> 
+          <!--<button class="btn-sm btn-del" onclick="deleteProduct('${p.id}','${p.name.replace(/'/g,"\\'")}')">Delete</button> -->
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openProductModal(id){
+  currentTags=[];
+  document.getElementById('productModalTitle').textContent=id?'Edit Product':'Add Product';
+  document.getElementById('pm-id').value=id||'';
+  document.getElementById('pm-name').value='';
+  document.getElementById('pm-price').value='';
+  document.getElementById('pm-category').value='';
+  document.getElementById('pm-color').value='';
+  document.getElementById('pm-badge').value='';
+  document.getElementById('pm-sizes').value='';
+  document.getElementById('pm-desc').value='';
+  document.getElementById('pm-imageData').value='';
+  document.getElementById('pm-inStock').checked=true;
+  document.getElementById('imgPreview').style.display='none';
+  document.getElementById('imgPlaceholder').style.display='block';
+
+  if(id){
+    const p=getProducts().find(p=>p.id===id);
+    if(p){
+      document.getElementById('pm-name').value=p.name||'';
+      document.getElementById('pm-price').value=p.price||'';
+      document.getElementById('pm-category').value=p.category||'';
+      document.getElementById('pm-color').value=p.color||'';
+      document.getElementById('pm-badge').value=p.badge||'';
+      document.getElementById('pm-sizes').value=(p.sizes||[]).join(', ');
+      document.getElementById('pm-desc').value=p.description||'';
+      document.getElementById('pm-inStock').checked=!!p.inStock;
+      currentTags=[...(p.tags||[])];
+      if(p.image){
+        document.getElementById('pm-imageData').value=p.image;
+        document.getElementById('imgPreview').src=p.image;
+        document.getElementById('imgPreview').style.display='block';
+        document.getElementById('imgPlaceholder').style.display='none';
+      }
+    }
+  }
+  renderTagsUI();
+  document.getElementById('productModal').classList.add('open');
+}
+
+function closeProductModal(){document.getElementById('productModal').classList.remove('open');}
+
+function handleImgUpload(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  if(file.size>5*1024*1024){showToast('Image too large (max 5MB)','error');return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const data=reader.result;
+    document.getElementById('pm-imageData').value=data;
+    document.getElementById('imgPreview').src=data;
+    document.getElementById('imgPreview').style.display='block';
+    document.getElementById('imgPlaceholder').style.display='none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// TAGS
+document.getElementById('tagInput').addEventListener('keydown',(e)=>{
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const val=e.target.value.trim().replace(/,$/,'');
+    if(val&&!currentTags.includes(val)){currentTags.push(val);renderTagsUI();}
+    e.target.value='';
+  }
+});
+
+function renderTagsUI(){
+  const container=document.getElementById('tagContainer');
+  const input=document.getElementById('tagInput');
+  container.querySelectorAll('.ftag').forEach(t=>t.remove());
+  currentTags.forEach(tag=>{
+    const span=document.createElement('span');
+    span.className='ftag';
+    span.innerHTML=`${tag}<span class="ftag-remove" onclick="removeTag('${tag}')">✕</span>`;
+    container.insertBefore(span,input);
+  });
+}
+
+function removeTag(tag){
+  currentTags=currentTags.filter(t=>t!==tag);
+  renderTagsUI();
+}
+
+function saveProduct(){
+  const id=document.getElementById('pm-id').value;
+  const name=document.getElementById('pm-name').value.trim();
+  const price=parseFloat(document.getElementById('pm-price').value);
+  const category=document.getElementById('pm-category').value;
+  const imageData=document.getElementById('pm-imageData').value;
+
+  if(!name){showToast('Product name is required!','error');return;}
+  if(!price||isNaN(price)){showToast('Valid price is required!','error');return;}
+  if(!category){showToast('Category is required!','error');return;}
+  if(!imageData){showToast('Please upload a product image!','error');return;}
+
+  const sizes=document.getElementById('pm-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const prods=getProducts();
+
+  const obj={
+    id:id||'p'+Date.now(),
+    name,
+    price,
+    category,
+    color:document.getElementById('pm-color').value.trim()||'Black',
+    badge:document.getElementById('pm-badge').value.trim(),
+    sizes,
+    tags:currentTags,
+    description:document.getElementById('pm-desc').value.trim(),
+    image:imageData,
+    inStock:document.getElementById('pm-inStock').checked,
+    createdAt:id?prods.find(p=>p.id===id)?.createdAt||new Date().toISOString():new Date().toISOString(),
+  };
+
+  if(id){
+    const idx=prods.findIndex(p=>p.id===id);prods[idx]=obj;
+  }
+  else{
+    prods.push(obj);
+  }
+  saveProducts(prods);
+  closeProductModal();
+  renderProductsTable();
+  renderDashboard();
+  showToast(id?'Product updated!':'Product added!','success');
+}
+
+function deleteProduct(id){
+  showConfirm('Delete Product','Are you sure you want to delete this product? This cannot be undone.',()=>{
+    const prods=getProducts().filter(p=>p.id!==id);
+    saveProducts(prods);
+    renderProductsTable();
+    renderDashboard();
+    showToast(`Product ${id} deleted.`,`success`);
+  });
+}
+
+// ================ SETTINGS ================
+function loadSettingsForm(){
+  const s=getSettings();
+  document.getElementById('set-formUrl').value=s.googleFormUrl||'';
+  document.getElementById('set-storeName').value=s.storeName||'Ntwana Ya Kasi';
+  document.getElementById('set-whatsapp').value=s.whatsapp||'';
+  document.getElementById('set-announcement').value=s.announcement||'';
+}
+
+function saveSettings(){
+  const s=getSettings();
+  s.googleFormUrl=document.getElementById('set-formUrl').value.trim();
+  s.storeName=document.getElementById('set-storeName').value.trim();
+  s.whatsapp=document.getElementById('set-whatsapp').value.trim();
+  s.announcement=document.getElementById('set-announcement').value.trim();
+  saveSettingsData(s);
+  showToast('Settings saved!','success');
+}
+
+function changePassword(){
+  const np=document.getElementById('set-newpass').value;
+  const cp=document.getElementById('set-confpass').value;
+  if(!np){showToast('Enter a new password','error'); 
+  return;} 
+  if(np!==cp){showToast('Passwords do not match!','error'); 
+  return;}
+  if(np.length<6){showToast('Password must be at least 6 characters','error'); 
+  return;} 
+  const creds=getCreds();
+  creds.pass=np;
+  localStorage.setItem(ADMIN_CREDS_KEY,JSON.stringify(creds));
+  document.getElementById('set-newpass').value='';
+  document.getElementById('set-confpass').value='';
+  showToast('Password updated!','success');
+}
+
+function exportData(){
+  const data={products:getProducts(),orders:getOrders(),settings:getSettings(),exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`nyk-data-${Date.now()}.json`;
+  a.click();
+  showToast('Data exported!','success');
+}
+
+function confirmReset(){
+  showConfirm('Reset All Data','This will clear all products, orders, and restore defaults. This action cannot be undone.',()=>{
+    localStorage.removeItem('nyk_products');
+    localStorage.removeItem('nyk_orders');
+    localStorage.removeItem('nyk_settings');
+    showToast('Data reset. Reloading...','success');
+    setTimeout(()=>location.reload(),1500);
+  });
+}
+
+// ================ CONFIRM MODAL ================
+let confirmCallback=null;
+function showConfirm(title,msg,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMessage').textContent=msg;
+  confirmCallback=cb;
+  document.getElementById('confirmModal').classList.add('open');
+}
+document.getElementById('confirmOkBtn').onclick=()=>{
+  closeConfirmModal();
+  if(confirmCallback)confirmCallback();
+};
+function closeConfirmModal(){document.getElementById('confirmModal').classList.remove('open');confirmCallback=null;}
+
+// Close modals on overlay click
+['productModal','orderModal','trackModal','confirmModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',(e)=>{
+    if(e.target===e.currentTarget)document.getElementById(id).classList.remove('open');
+  });
+});
+
+// ESC to close
+document.addEventListener('keydown',(e)=>{
+  if(e.key==='Escape'){
+    ['productModal','orderModal','trackModal','confirmModal'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  }
+});
+
+// ================ TOAST ================
+function showToast(msg,type='success'){
+  const t=document.getElementById('admToast');
+  t.className='adm-toast '+type;
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+</script>
+
+</body>
+</html>
